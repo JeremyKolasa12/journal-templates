@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/JeremyKolasa12/journal-templates/schema.json",
+  "title": "Journal template",
+  "description": "A journal's submission requirements, consumed by the Vera Vulpes research app. Numbers are approximate starting points; always verify against the journal's current author guidelines.",
+  "type": "object",
+  "required": ["schemaVersion", "name"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "publisher": { "type": "string" },
+    "citationStyle": {
+      "type": "string",
+      "description": "A citation-style id (e.g. apa, vancouver, ieee, nature)."
+    },
+    "wordsPerPage": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Used only for the page ESTIMATE."
+    },
+    "guidelinesUrl": { "type": "string", "format": "uri" },
+    "notes": { "type": "string" },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "abstractWords": { "type": ["integer", "null"], "minimum": 1 },
+        "mainTextWords": { "type": ["integer", "null"], "minimum": 1 },
+        "references": { "type": ["integer", "null"], "minimum": 1 },
+        "figures": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "requiredSections": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

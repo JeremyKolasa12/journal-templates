@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "name": "PLOS ONE",
+  "publisher": "PLOS",
+  "citationStyle": "vancouver",
+  "wordsPerPage": 600,
+  "guidelinesUrl": "https://journals.plos.org/plosone/s/submission-guidelines",
+  "limits": {
+    "abstractWords": 300,
+    "mainTextWords": null,
+    "references": null,
+    "figures": null
+  },
+  "requiredSections": [
+    "Abstract",
+    "Introduction",
+    "Methods",
+    "Results",
+    "Discussion",
+    "References"
+  ]
+}

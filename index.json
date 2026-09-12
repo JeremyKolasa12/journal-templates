@@ -1,0 +1,19 @@
+[
+  {
+    "id": "generic-research-article",
+    "name": "Generic research article",
+    "file": "templates/generic-research-article.json"
+  },
+  {
+    "id": "nature-article",
+    "name": "Nature (Article)",
+    "publisher": "Springer Nature",
+    "file": "templates/nature-article.json"
+  },
+  {
+    "id": "plos-one",
+    "name": "PLOS ONE",
+    "publisher": "PLOS",
+    "file": "templates/plos-one.json"
+  }
+]

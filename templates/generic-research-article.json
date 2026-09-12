@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "name": "Generic research article",
+  "citationStyle": "apa",
+  "wordsPerPage": 600,
+  "limits": {
+    "abstractWords": 250,
+    "mainTextWords": 5000,
+    "references": 60,
+    "figures": null
+  },
+  "requiredSections": [
+    "Abstract",
+    "Introduction",
+    "Methods",
+    "Results",
+    "Discussion",
+    "References"
+  ]
+}

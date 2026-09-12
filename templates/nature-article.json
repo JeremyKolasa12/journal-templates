@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "name": "Nature (Article)",
+  "publisher": "Springer Nature",
+  "citationStyle": "nature",
+  "wordsPerPage": 900,
+  "guidelinesUrl": "https://www.nature.com/nature/for-authors/formatting-guide",
+  "limits": {
+    "abstractWords": 150,
+    "mainTextWords": null,
+    "references": 50,
+    "figures": null
+  },
+  "requiredSections": [
+    "Abstract",
+    "Introduction",
+    "Results",
+    "Discussion",
+    "Methods",
+    "References"
+  ]
+}
