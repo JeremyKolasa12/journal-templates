@@ -44,10 +44,16 @@ validate.mjs          # dependency-free CI validation
 
 ## Contributing a journal
 
+You only add **one file** — `index.json` is generated automatically.
+
 1. Add `templates/<your-id>.json` (see the format above; `id` = kebab-case).
-2. Add an entry to `index.json` pointing at it.
-3. Run `node validate.mjs` locally (CI runs it on every PR).
-4. Open a pull request. Cite the journal's author-guidelines page in the PR.
+   The easiest way: build the template in the Vera Vulpes app and click
+   **Contribute**, which opens a prefilled pull request.
+2. (Optional) Run `node generate-index.mjs && node validate.mjs` locally.
+3. Open a pull request. Cite the journal's author-guidelines page in the PR.
+
+CI regenerates `index.json` from `templates/*.json` and validates every file; on
+merge to `main` the refreshed `index.json` is committed automatically.
 
 Contributions are licensed **CC0-1.0** (public domain) so anyone can use them
 freely.
