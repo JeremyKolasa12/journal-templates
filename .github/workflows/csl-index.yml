@@ -36,13 +36,23 @@ jobs:
         with:
           node-version: 20
 
+      # FIRST, validate what is actually committed. The build step below
+      # overwrites the file, so checking only afterwards would validate the
+      # runner's fresh build and wave through a hand-edited row in the PR.
+      - name: Validate the committed index
+        run: node csl/validate-style-index.mjs
+
       - name: Clone the CSL styles repo
         run: git clone --depth 1 https://github.com/citation-style-language/styles.git /tmp/csl-styles
 
-      - name: Build the index
+      - name: Rebuild the index
         run: node csl/build-style-index.mjs --styles /tmp/csl-styles
 
-      - name: Validate
+      # And validate the rebuild, which is what would be committed below. On a
+      # PR this is the proof that the script still works against current
+      # upstream; a diff against the committed file is EXPECTED here, because
+      # upstream moves between rebuilds.
+      - name: Validate the rebuild
         run: node csl/validate-style-index.mjs
 
       # A PR only checks that what it proposes is well-formed. Nothing below
