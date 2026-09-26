@@ -1,7 +1,9 @@
 name: validate
 on:
   push:
-    branches: [main]
+    # The repo's default branch is `master`. This said `main`, so the push job
+    # (and the index-regeneration step below it) had never once run.
+    branches: [master]
   pull_request:
 permissions:
   contents: write
@@ -16,9 +18,10 @@ jobs:
       # Regenerate the index from templates/*.json, then validate everything.
       - run: node generate-index.mjs
       - run: node validate.mjs
-      # On main, commit the regenerated index if a contribution changed it.
+      # On the default branch, commit the regenerated index if a contribution
+      # changed it.
       - name: Commit updated index
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         run: |
           if ! git diff --quiet index.json; then
             git config user.name "github-actions[bot]"

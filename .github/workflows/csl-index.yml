@@ -1,0 +1,83 @@
+name: csl-index
+
+# Rebuild the CSL style index from upstream.
+#
+# The index is derived data: it is generated here, never hand-edited, and the app
+# fetches it from a DATED TAG rather than from the branch. That is deliberate —
+# a tagged jsDelivr URL is immutable and cacheable for a year, so a returning
+# writer pays nothing for a catalogue of 10,000 journals, and a stale app keeps
+# searching the catalogue it shipped with instead of silently drifting.
+on:
+  schedule:
+    # Mondays, 05:00 UTC. Upstream adds a few dozen journals a week.
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+  # Also validate on any PR that touches the index or its scripts, so a
+  # hand-edited row is caught before it is merged.
+  pull_request:
+    paths:
+      - 'csl/**'
+      - '.github/workflows/csl-index.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The count floor in validate-style-index.mjs compares against
+          # HEAD:csl/styles-index.json, so the checkout needs that blob.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Clone the CSL styles repo
+        run: git clone --depth 1 https://github.com/citation-style-language/styles.git /tmp/csl-styles
+
+      - name: Build the index
+        run: node csl/build-style-index.mjs --styles /tmp/csl-styles
+
+      - name: Validate
+        run: node csl/validate-style-index.mjs
+
+      # A PR only checks that what it proposes is well-formed. Nothing below
+      # this line runs for one.
+      - name: Commit and tag
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          if git diff --quiet csl/styles-index.json; then
+            echo "index unchanged — nothing to commit"
+            exit 0
+          fi
+
+          count=$(node -e 'console.log(require("./csl/styles-index.json").count)')
+          generated=$(node -e 'console.log(require("./csl/styles-index.json").generated)')
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add csl/styles-index.json
+          git commit -m "chore(csl): rebuild style index (${count} styles)"
+          git push
+
+          # A tag is a promise that the bytes behind it never change, so an
+          # existing one is never moved — a second build on the same day gets
+          # its own suffix.
+          tag="csl-${generated}"
+          n=1
+          while git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; do
+            n=$((n + 1))
+            tag="csl-${generated}.${n}"
+          done
+          git tag "$tag"
+          git push origin "$tag"
+          echo "tagged ${tag} (${count} styles)"
+          echo "### csl-index" >> "$GITHUB_STEP_SUMMARY"
+          echo "Tagged \`${tag}\` with ${count} styles." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`https://cdn.jsdelivr.net/gh/${GITHUB_REPOSITORY}@${tag}/csl/styles-index.json\`" >> "$GITHUB_STEP_SUMMARY"

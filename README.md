@@ -20,6 +20,7 @@ index.json            # manifest: [{ id, name, publisher?, file }]
 templates/<id>.json   # one file per journal
 schema.json           # JSON Schema for a template (editor IntelliSense + docs)
 validate.mjs          # dependency-free CI validation
+csl/                  # the CSL style index (generated -- see below)
 ```
 
 ## Template format
@@ -53,7 +54,66 @@ You only add **one file** — `index.json` is generated automatically.
 3. Open a pull request. Cite the journal's author-guidelines page in the PR.
 
 CI regenerates `index.json` from `templates/*.json` and validates every file; on
-merge to `main` the refreshed `index.json` is committed automatically.
+merge to `master` the refreshed `index.json` is committed automatically.
+
+## The CSL style index (`csl/`)
+
+A **generated** catalogue of every citation style in
+[citation-style-language/styles](https://github.com/citation-style-language/styles) --
+about 10,900 of them -- so an app can let a writer search for their journal by
+name. Do not hand-edit it.
+
+It exists because the CSL repo ships no manifest, and the titles are only inside
+the files. jsDelivr can list the repo's *filenames*, but a filename is a slug:
+nobody looking for JAMA types `american-medical-association`.
+
+```
+csl/styles-index.json         # the index (generated; one style per line)
+csl/build-style-index.mjs     # rebuild it from a clone of the styles repo
+csl/validate-style-index.mjs  # structural checks + a count floor
+```
+
+Each row is `[id, title, shortTitle | 0, formatIdx, parentIdx]`, where
+`formatIdx` indexes the `formats` array in the same file (`-1` = the style
+declares none, so it inherits its parent's) and `parentIdx` indexes `parents`
+(`-1` = an independent style). `shortTitle` is the style's `<title-short>` --
+the abbreviation people actually search by -- or `0` when it has none.
+
+To rebuild locally:
+
+```sh
+git clone --depth 1 https://github.com/citation-style-language/styles.git /tmp/csl-styles
+node csl/build-style-index.mjs --styles /tmp/csl-styles
+node csl/validate-style-index.mjs
+```
+
+### Consuming it
+
+Fetch it from a **dated tag**, never from the branch:
+
+```
+https://cdn.jsdelivr.net/gh/JeremyKolasa12/journal-templates@csl-<date>/csl/styles-index.json
+```
+
+A tagged URL is immutable, so the CDN and the browser can cache it for a year and
+a returning reader pays nothing for it. Tags are never moved; a second build on
+the same day gets its own suffix. The `csl-index` workflow rebuilds weekly and
+tags only when the index actually changed, printing the new URL in its run
+summary.
+
+`generated` is the **upstream commit's** date, not the build date, and `v`, the
+`formats` list and the row order are all fixed -- so rebuilding an unchanged
+catalogue produces a byte-identical file and CI has nothing to commit. Without
+that, a weekly rebuild would publish a new tag every Monday holding exactly the
+same 10,900 styles.
+
+Full titles are kept even though 84% of ids would reproduce a lower-cased version
+of their title. Reconstructing a title from its id needs a capitalisation rule,
+and no rule recovers `PLOS ONE` or `AAPS PharmSciTech` from their slugs. The
+measured saving was 33 KB brotli out of 171 KB; a rule that has to stay
+byte-identical between this repo and every consumer, forever, or journal names
+silently go wrong, is not worth 33 KB of a file fetched once.
 
 Contributions are licensed **CC0-1.0** (public domain) so anyone can use them
-freely.
+freely. The style index is derived from the CSL styles repo, which is itself
+CC-BY-SA; the styles' own metadata remains theirs.
