@@ -63,29 +63,59 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           set -euo pipefail
-          if git diff --quiet csl/styles-index.json; then
-            echo "index unchanged — nothing to commit"
-            exit 0
-          fi
 
           count=$(node -e 'console.log(require("./csl/styles-index.json").count)')
           generated=$(node -e 'console.log(require("./csl/styles-index.json").generated)')
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add csl/styles-index.json
-          git commit -m "chore(csl): rebuild style index (${count} styles)"
-          git push
 
-          # A tag is a promise that the bytes behind it never change, so an
-          # existing one is never moved — a second build on the same day gets
-          # its own suffix.
-          tag="csl-${generated}"
+          # Committing and PUBLISHING are separate questions, and conflating them
+          # is how the first tag never got created. This step used to bail out
+          # whenever the rebuild matched what was already committed — which is the
+          # normal state of a fresh repo whose index was committed by hand — so
+          # there was nothing to commit, and therefore nothing was ever tagged,
+          # and the app's pinned URL 404'd forever. The tag had to be cut by hand
+          # to get this off the ground at all.
+          if git diff --quiet csl/styles-index.json; then
+            echo "index unchanged — nothing to commit"
+          else
+            git add csl/styles-index.json
+            git commit -m "chore(csl): rebuild style index (${count} styles)"
+            git push
+          fi
+
+          # Now reconcile the tag against what is in the tree, whether or not this
+          # run changed it. The question is "are these bytes published?", not
+          # "did I just change them?".
+          git fetch --tags --force --quiet
+
+          # Compared as git BLOB IDS, not as bytes: a Windows checkout stores
+          # CRLF in the working tree while the blob is LF, so `cmp` against the
+          # file on disk reports a difference that does not exist. `hash-object`
+          # normalises the same way `add` does.
+          want=$(git hash-object csl/styles-index.json)
+
+          base="csl-${generated}"
+          tag="$base"
           n=1
-          while git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; do
+          # A tag promises the bytes behind it never change, so an existing one is
+          # never moved. If it already holds exactly this index, publishing is
+          # done; if it holds something else (upstream committed twice in a day),
+          # the new content gets its own suffix.
+          while git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; do
+            if [ "$(git rev-parse "${tag}:csl/styles-index.json")" = "$want" ]; then
+              echo "already published as ${tag}"
+              {
+                echo "### csl-index"
+                echo "No change: \`${tag}\` already holds these ${count} styles."
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
             n=$((n + 1))
-            tag="csl-${generated}.${n}"
+            tag="${base}.${n}"
           done
+
           git tag "$tag"
           git push origin "$tag"
           echo "tagged ${tag} (${count} styles)"
