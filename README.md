@@ -60,8 +60,8 @@ merge to `master` the refreshed `index.json` is committed automatically.
 
 A **generated** catalogue of every citation style in
 [citation-style-language/styles](https://github.com/citation-style-language/styles) --
-about 10,900 of them -- so an app can let a writer search for their journal by
-name. Do not hand-edit it.
+10,863 of them as of the current build -- so an app can let a writer search for
+their journal by name. Do not hand-edit it.
 
 It exists because the CSL repo ships no manifest, and the titles are only inside
 the files. jsDelivr can list the repo's *filenames*, but a filename is a slug:
@@ -95,24 +95,47 @@ Fetch it from a **dated tag**, never from the branch:
 https://cdn.jsdelivr.net/gh/JeremyKolasa12/journal-templates@csl-<date>/csl/styles-index.json
 ```
 
-A tagged URL is immutable, so the CDN and the browser can cache it for a year and
-a returning reader pays nothing for it. Tags are never moved; a second build on
-the same day gets its own suffix. The `csl-index` workflow rebuilds weekly and
-tags only when the index actually changed, printing the new URL in its run
-summary.
+The reason is **not** caching. Measured, jsDelivr serves the tag and the branch
+byte-identical headers — `public, max-age=604800, s-maxage=43200`, a week in the
+browser and twelve hours at the edge — and labels both
+`x-jsd-version-type: branch`. A tag earns no cache advantage whatsoever.
+
+What it earns is that a cache hit can never be *wrong*. `@master` changes under
+you when the branch moves, so two readers can hold different catalogues under the
+same URL and neither can tell. Behind a dated tag the bytes are fixed forever, so
+a stale copy is still a correct one, and a new catalogue is a new URL that only a
+reviewed code change adopts. Tags are never moved; a second build on the same day
+gets its own suffix. The `csl-index` workflow rebuilds weekly and tags only when
+the index actually changed, printing the new URL in its run summary.
 
 `generated` is the **upstream commit's** date, not the build date, and `v`, the
 `formats` list and the row order are all fixed -- so rebuilding an unchanged
 catalogue produces a byte-identical file and CI has nothing to commit. Without
 that, a weekly rebuild would publish a new tag every Monday holding exactly the
-same 10,900 styles.
+same 10,863 styles.
 
-Full titles are kept even though 84% of ids would reproduce a lower-cased version
-of their title. Reconstructing a title from its id needs a capitalisation rule,
-and no rule recovers `PLOS ONE` or `AAPS PharmSciTech` from their slugs. The
-measured saving was 33 KB brotli out of 171 KB; a rule that has to stay
-byte-identical between this repo and every consumer, forever, or journal names
-silently go wrong, is not worth 33 KB of a file fetched once.
+Full titles are kept, though it is worth saying exactly what that costs. Two
+different rules were measured over the 10,863 rows, at maximum local brotli
+(171 KB as the baseline):
+
+| rule | rows it covers | saving |
+|---|---|---|
+| `slugify(title) == id` | 9,170 — 84.4% | 47 KB |
+| `deslugify(id) == title`, exactly | 7,225 — 66.5% | 32 KB |
+
+The first is the tempting one and is unusable: it says only that the title
+flattens to the id, not that anything can rebuild it. No capitalisation rule
+recovers `PLOS ONE` or `AAPS PharmSciTech` from their slugs, so 84% of titles
+would come back subtly wrong.
+
+The second is safe — it is verified per row at build time — and is what the 32 KB
+buys. That is the real trade, and 32 KB off a file fetched once is not worth a
+rule that must stay byte-identical between this repo and every consumer forever,
+or journal names silently go wrong.
+
+All four figures are local compression ratios, not transfer sizes: jsDelivr
+compresses for speed rather than size and serves the real file at **215 KB
+brotli** (219 KB gzip, 968 KB raw).
 
 Contributions are licensed **CC0-1.0** (public domain) so anyone can use them
 freely. The style index is derived from the CSL styles repo, which is itself
