@@ -95,11 +95,12 @@ Fetch it from a **dated tag**, never from the branch:
 https://cdn.jsdelivr.net/gh/JeremyKolasa12/journal-templates@csl-<date>/csl/styles-index.json
 ```
 
-A tagged URL is immutable, so the CDN and the browser can cache it for a year and
-a returning reader pays nothing for it. Tags are never moved; a second build on
-the same day gets its own suffix. The `csl-index` workflow rebuilds weekly and
-tags only when the index actually changed, printing the new URL in its run
-summary.
+A tagged URL is immutable, so it is safe to cache hard and a returning reader
+pays nothing for it. Measured against the live CDN: `public, max-age=604800,
+s-maxage=43200` — a week in the browser, twelve hours at the edge. Tags are never
+moved; a second build on the same day gets its own suffix. The `csl-index`
+workflow rebuilds weekly and tags only when the index actually changed, printing
+the new URL in its run summary.
 
 `generated` is the **upstream commit's** date, not the build date, and `v`, the
 `formats` list and the row order are all fixed -- so rebuilding an unchanged
@@ -109,10 +110,15 @@ same 10,900 styles.
 
 Full titles are kept even though 84% of ids would reproduce a lower-cased version
 of their title. Reconstructing a title from its id needs a capitalisation rule,
-and no rule recovers `PLOS ONE` or `AAPS PharmSciTech` from their slugs. The
-measured saving was 33 KB brotli out of 171 KB; a rule that has to stay
-byte-identical between this repo and every consumer, forever, or journal names
-silently go wrong, is not worth 33 KB of a file fetched once.
+and no rule recovers `PLOS ONE` or `AAPS PharmSciTech` from their slugs. Measured
+locally at maximum brotli, omitting the reconstructable titles saved 33 KB out of
+171 KB — and a rule that has to stay byte-identical between this repo and every
+consumer, forever, or journal names silently go wrong, is not worth 33 KB of a
+file fetched once.
+
+Those are compression-ratio figures, not transfer sizes: jsDelivr compresses for
+speed rather than for size, and serves the real file at **215 KB brotli** (219 KB
+gzip, 968 KB raw).
 
 Contributions are licensed **CC0-1.0** (public domain) so anyone can use them
 freely. The style index is derived from the CSL styles repo, which is itself
