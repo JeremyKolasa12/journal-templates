@@ -3,10 +3,12 @@ name: csl-index
 # Rebuild the CSL style index from upstream.
 #
 # The index is derived data: it is generated here, never hand-edited, and the app
-# fetches it from a DATED TAG rather than from the branch. That is deliberate —
-# a tagged jsDelivr URL is immutable and cacheable for a year, so a returning
-# writer pays nothing for a catalogue of 10,000 journals, and a stale app keeps
-# searching the catalogue it shipped with instead of silently drifting.
+# fetches it from a DATED TAG rather than from the branch. Not for caching —
+# jsDelivr serves a tag and a branch identical headers (max-age=604800). For
+# correctness: the bytes behind a tag never change, so a stale copy is still a
+# correct one, and a new catalogue is a new URL that only a reviewed code change
+# adopts. A branch URL would silently hand different readers different
+# catalogues. See the README's "Consuming it".
 on:
   schedule:
     # Mondays, 05:00 UTC. Upstream adds a few dozen journals a week.
