@@ -1,7 +1,7 @@
 {
   "v": 1,
-  "generated": "2026-11-06",
-  "source": {"repo":"citation-style-language/styles","commit":"af0aea3fffd44fe798cce9285598d0d5cf62ef23"},
+  "generated": "2026-11-16",
+  "source": {"repo":"citation-style-language/styles","commit":"bcae404e9f8130cc2b94b0749d53514212a15a4a"},
   "count": 10869,
   "formats": ["author-date","numeric","note","label","author"],
   "fields": ["id","title","shortTitle","format","parent"],
